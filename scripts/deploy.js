@@ -4,7 +4,7 @@ async function main() {
 
   const Factory = await hre.ethers.deployContract("AccountFactory");
   await Factory.waitForDeployment();
-  console.log(`AF deployed to ${Factory.target
+  console.log(`AF deployed to ${Factory.target}`);
   
   // Deploy TestTarget contract (contract that has variable `x`)
   const TestTarget = await hre.ethers.deployContract("TestTarget");

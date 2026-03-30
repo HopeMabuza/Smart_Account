@@ -1,0 +1,955 @@
+{
+  "version": "3.4",
+  "log": [
+    {
+      "@account-abstraction/contracts/core/EntryPoint.sol:EntryPoint": {
+        "src": "@account-abstraction/contracts/core/EntryPoint.sol:22",
+        "version": {
+          "withMetadata": "6c5a78862b5fea8e4bb2a23ba3a28fdbc655c3a64df2f041e245e75523aa4cc6",
+          "withoutMetadata": "714b58766a8d74a790c33fa96a67570df2ae6de9473028fa533b5c3649cba08d",
+          "linkedWithoutMetadata": "714b58766a8d74a790c33fa96a67570df2ae6de9473028fa533b5c3649cba08d"
+        },
+        "inherit": [
+          "@openzeppelin/contracts/security/ReentrancyGuard.sol:ReentrancyGuard",
+          "@account-abstraction/contracts/core/NonceManager.sol:NonceManager",
+          "@account-abstraction/contracts/core/StakeManager.sol:StakeManager",
+          "@account-abstraction/contracts/interfaces/IEntryPoint.sol:IEntryPoint",
+          "@account-abstraction/contracts/interfaces/INonceManager.sol:INonceManager",
+          "@account-abstraction/contracts/interfaces/IStakeManager.sol:IStakeManager"
+        ],
+        "libraries": [
+          "@account-abstraction/contracts/interfaces/UserOperation.sol:UserOperationLib",
+          "@account-abstraction/contracts/utils/Exec.sol:Exec"
+        ],
+        "methods": [
+          "handleOps(struct UserOperation[],address payable)",
+          "handleAggregatedOps(struct IEntryPoint.UserOpsPerAggregator[],address payable)",
+          "simulateHandleOp((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes),address,bytes)",
+          "innerHandleOp(bytes,((address,uint256,uint256,uint256,uint256,address,uint256,uint256),bytes32,uint256,uint256,uint256),bytes)",
+          "getUserOpHash((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes))",
+          "simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes))",
+          "getSenderAddress(bytes)",
+          "_validateSenderAndPaymaster(bytes,address,bytes)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "state-variable-immutable",
+            "name": "senderCreator",
+            "src": "@account-abstraction/contracts/core/EntryPoint.sol:26"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "deposits",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_mapping(t_address,t_struct(DepositInfo)3388_storage)",
+              "contract": "StakeManager",
+              "src": "@account-abstraction/contracts/core/StakeManager.sol:16"
+            },
+            {
+              "label": "nonceSequenceNumber",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_mapping(t_address,t_mapping(t_uint192,t_uint256))",
+              "contract": "NonceManager",
+              "src": "@account-abstraction/contracts/core/NonceManager.sol:14"
+            },
+            {
+              "label": "_status",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "@openzeppelin/contracts/security/ReentrancyGuard.sol:37"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_mapping(t_address,t_mapping(t_uint192,t_uint256))": {
+              "label": "mapping(address => mapping(uint192 => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_struct(DepositInfo)3388_storage)": {
+              "label": "mapping(address => struct IStakeManager.DepositInfo)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint192,t_uint256)": {
+              "label": "mapping(uint192 => uint256)",
+              "numberOfBytes": "32"
+            },
+            "t_struct(DepositInfo)3388_storage": {
+              "label": "struct IStakeManager.DepositInfo",
+              "members": [
+                {
+                  "label": "deposit",
+                  "type": "t_uint112",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "staked",
+                  "type": "t_bool",
+                  "offset": 14,
+                  "slot": "0"
+                },
+                {
+                  "label": "stake",
+                  "type": "t_uint112",
+                  "offset": 15,
+                  "slot": "0"
+                },
+                {
+                  "label": "unstakeDelaySec",
+                  "type": "t_uint32",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "withdrawTime",
+                  "type": "t_uint48",
+                  "offset": 4,
+                  "slot": "1"
+                }
+              ],
+              "numberOfBytes": "64"
+            },
+            "t_uint112": {
+              "label": "uint112",
+              "numberOfBytes": "14"
+            },
+            "t_uint192": {
+              "label": "uint192",
+              "numberOfBytes": "24"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            },
+            "t_uint32": {
+              "label": "uint32",
+              "numberOfBytes": "4"
+            },
+            "t_uint48": {
+              "label": "uint48",
+              "numberOfBytes": "6"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/core/NonceManager.sol:NonceManager": {
+        "src": "@account-abstraction/contracts/core/NonceManager.sol:9",
+        "version": {
+          "withMetadata": "4c1105ac31c2e73dd664db8e1098a0f8e66cc70a493bc37b8dcb0b14a13acf9e",
+          "withoutMetadata": "a0c384bd570513e82a37309d393fc737166e5db9ebfae6de45f6cbdfc75369ef",
+          "linkedWithoutMetadata": "a0c384bd570513e82a37309d393fc737166e5db9ebfae6de45f6cbdfc75369ef"
+        },
+        "inherit": [
+          "@account-abstraction/contracts/interfaces/INonceManager.sol:INonceManager"
+        ],
+        "libraries": [],
+        "methods": [
+          "getNonce(address,uint192)",
+          "incrementNonce(uint192)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "nonceSequenceNumber",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_mapping(t_address,t_mapping(t_uint192,t_uint256))",
+              "contract": "NonceManager",
+              "src": "@account-abstraction/contracts/core/NonceManager.sol:14"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_mapping(t_address,t_mapping(t_uint192,t_uint256))": {
+              "label": "mapping(address => mapping(uint192 => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint192,t_uint256)": {
+              "label": "mapping(uint192 => uint256)",
+              "numberOfBytes": "32"
+            },
+            "t_uint192": {
+              "label": "uint192",
+              "numberOfBytes": "24"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/core/SenderCreator.sol:SenderCreator": {
+        "src": "@account-abstraction/contracts/core/SenderCreator.sol:8",
+        "version": {
+          "withMetadata": "e0938fbe6d3c7bf4d97ce044aa1625f4a56e80088e81325cfaff323d34f46c3a",
+          "withoutMetadata": "d6e7207ca82f67acb2a1942fa77e88fc3d0eea41e4b088b464a789649f527bd0",
+          "linkedWithoutMetadata": "d6e7207ca82f67acb2a1942fa77e88fc3d0eea41e4b088b464a789649f527bd0"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "createSender(bytes)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/core/StakeManager.sol:StakeManager": {
+        "src": "@account-abstraction/contracts/core/StakeManager.sol:13",
+        "inherit": [
+          "@account-abstraction/contracts/interfaces/IStakeManager.sol:IStakeManager"
+        ],
+        "libraries": [],
+        "methods": [
+          "getDepositInfo(address)",
+          "balanceOf(address)",
+          "()",
+          "depositTo(address)",
+          "addStake(uint32)",
+          "unlockStake()",
+          "withdrawStake(address payable)",
+          "withdrawTo(address payable,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "deposits",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_mapping(t_address,t_struct(DepositInfo)3388_storage)",
+              "contract": "StakeManager",
+              "src": "@account-abstraction/contracts/core/StakeManager.sol:16"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_mapping(t_address,t_struct(DepositInfo)3388_storage)": {
+              "label": "mapping(address => struct IStakeManager.DepositInfo)",
+              "numberOfBytes": "32"
+            },
+            "t_struct(DepositInfo)3388_storage": {
+              "label": "struct IStakeManager.DepositInfo",
+              "members": [
+                {
+                  "label": "deposit",
+                  "type": "t_uint112",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "staked",
+                  "type": "t_bool",
+                  "offset": 14,
+                  "slot": "0"
+                },
+                {
+                  "label": "stake",
+                  "type": "t_uint112",
+                  "offset": 15,
+                  "slot": "0"
+                },
+                {
+                  "label": "unstakeDelaySec",
+                  "type": "t_uint32",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "withdrawTime",
+                  "type": "t_uint48",
+                  "offset": 4,
+                  "slot": "1"
+                }
+              ],
+              "numberOfBytes": "64"
+            },
+            "t_uint112": {
+              "label": "uint112",
+              "numberOfBytes": "14"
+            },
+            "t_uint32": {
+              "label": "uint32",
+              "numberOfBytes": "4"
+            },
+            "t_uint48": {
+              "label": "uint48",
+              "numberOfBytes": "6"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/interfaces/IAccount.sol:IAccount": {
+        "src": "@account-abstraction/contracts/interfaces/IAccount.sol:6",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "validateUserOp((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes),bytes32,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/interfaces/IAggregator.sol:IAggregator": {
+        "src": "@account-abstraction/contracts/interfaces/IAggregator.sol:9",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "validateSignatures(struct UserOperation[],bytes)",
+          "validateUserOpSignature((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes))",
+          "aggregateSignatures(struct UserOperation[])"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/interfaces/IEntryPoint.sol:IEntryPoint": {
+        "src": "@account-abstraction/contracts/interfaces/IEntryPoint.sol:17",
+        "inherit": [
+          "@account-abstraction/contracts/interfaces/INonceManager.sol:INonceManager",
+          "@account-abstraction/contracts/interfaces/IStakeManager.sol:IStakeManager"
+        ],
+        "libraries": [],
+        "methods": [
+          "handleOps(struct UserOperation[],address payable)",
+          "handleAggregatedOps(struct IEntryPoint.UserOpsPerAggregator[],address payable)",
+          "getUserOpHash((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes))",
+          "simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes))",
+          "getSenderAddress(bytes)",
+          "simulateHandleOp((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes),address,bytes)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/interfaces/INonceManager.sol:INonceManager": {
+        "src": "@account-abstraction/contracts/interfaces/INonceManager.sol:4",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "getNonce(address,uint192)",
+          "incrementNonce(uint192)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/interfaces/IPaymaster.sol:IPaymaster": {
+        "src": "@account-abstraction/contracts/interfaces/IPaymaster.sol:10",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "validatePaymasterUserOp((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes),bytes32,uint256)",
+          "postOp(uint8,bytes,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/interfaces/IStakeManager.sol:IStakeManager": {
+        "src": "@account-abstraction/contracts/interfaces/IStakeManager.sol:9",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "getDepositInfo(address)",
+          "balanceOf(address)",
+          "depositTo(address)",
+          "addStake(uint32)",
+          "unlockStake()",
+          "withdrawStake(address payable)",
+          "withdrawTo(address payable,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/interfaces/UserOperation.sol:UserOperationLib": {
+        "src": "@account-abstraction/contracts/interfaces/UserOperation.sol:40",
+        "version": {
+          "withMetadata": "c1b85988973c67b74226fca303eb399f1a2a1cfcf362cba4790ac4cf36ab94d5",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@account-abstraction/contracts/utils/Exec.sol:Exec": {
+        "src": "@account-abstraction/contracts/utils/Exec.sol:9",
+        "version": {
+          "withMetadata": "72f975170f24d007dfa341ec31fad10a42cf61bfd2b818bbcacac89d7ce93d39",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@openzeppelin/contracts/security/ReentrancyGuard.sol:ReentrancyGuard": {
+        "src": "@openzeppelin/contracts/security/ReentrancyGuard.sol:22",
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "ReentrancyGuard",
+            "src": "@openzeppelin/contracts/security/ReentrancyGuard.sol:39"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_status",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "@openzeppelin/contracts/security/ReentrancyGuard.sol:37"
+            }
+          ],
+          "types": {
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20": {
+        "src": "@openzeppelin/contracts/token/ERC20/IERC20.sol:9",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "totalSupply()",
+          "balanceOf(address)",
+          "transfer(address,uint256)",
+          "allowance(address,address)",
+          "approve(address,uint256)",
+          "transferFrom(address,address,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@openzeppelin/contracts/utils/Create2.sol:Create2": {
+        "src": "@openzeppelin/contracts/utils/Create2.sol:15",
+        "version": {
+          "withMetadata": "e603eec7d1e0d76bb24f412c312478731713e1842b46584a2439483004b045ad",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@openzeppelin/contracts/utils/Strings.sol:Strings": {
+        "src": "@openzeppelin/contracts/utils/Strings.sol:12",
+        "version": {
+          "withMetadata": "8c3956eaedfe8aea67c5c6d7cd8e6d53d6af0692ea3a9235629d1ab9faadceed",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [
+          "@openzeppelin/contracts/utils/math/Math.sol:Math",
+          "@openzeppelin/contracts/utils/math/SignedMath.sol:SignedMath"
+        ],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@openzeppelin/contracts/utils/cryptography/ECDSA.sol:ECDSA": {
+        "src": "@openzeppelin/contracts/utils/cryptography/ECDSA.sol:14",
+        "version": {
+          "withMetadata": "8caa03f542c683dba2eacf453dd46d87eacee65cd7e8014c18937a73d905220d",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [
+          "@openzeppelin/contracts/utils/Strings.sol:Strings"
+        ],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@openzeppelin/contracts/utils/math/Math.sol:Math": {
+        "src": "@openzeppelin/contracts/utils/math/Math.sol:9",
+        "version": {
+          "withMetadata": "3f196b11ee8de0e66697f7070bae2ebe54eb4156ff06ba32554084ae07465a83",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "@openzeppelin/contracts/utils/math/SignedMath.sol:SignedMath": {
+        "src": "@openzeppelin/contracts/utils/math/SignedMath.sol:9",
+        "version": {
+          "withMetadata": "740616ddcae5b3b7d55a887527a9fdfc0d381ccefd573cc7603e80f1d6b711b0",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "contracts/Account.sol:Account": {
+        "src": "contracts/Account.sol:9",
+        "version": {
+          "withMetadata": "421a388cd6c8df3b7990a8affb6a271744d8a97d6f5c7da56f88cb8943e8fe92",
+          "withoutMetadata": "14c4a2a01c318315bb31c9fbfefae6051c9853668a81e46a3426e26cf2440000",
+          "linkedWithoutMetadata": "14c4a2a01c318315bb31c9fbfefae6051c9853668a81e46a3426e26cf2440000"
+        },
+        "inherit": [
+          "@account-abstraction/contracts/interfaces/IAccount.sol:IAccount"
+        ],
+        "libraries": [
+          "@openzeppelin/contracts/utils/cryptography/ECDSA.sol:ECDSA"
+        ],
+        "methods": [
+          "(address)",
+          "validateUserOp((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes),bytes32,uint256)",
+          "executeBatch(address[],uint256[],bytes[])",
+          "execute()"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "Account",
+            "src": "contracts/Account.sol:13"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "count",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_uint256",
+              "contract": "Account",
+              "src": "contracts/Account.sol:10"
+            },
+            {
+              "label": "owner",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_address",
+              "contract": "Account",
+              "src": "contracts/Account.sol:11"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "contracts/Account.sol:AccountFactory": {
+        "src": "contracts/Account.sol:47",
+        "version": {
+          "withMetadata": "b56e04c70d54526564bfd4922118ca65e01cdd9a113407c93d21b7b4705195aa",
+          "withoutMetadata": "2cde5712280e5d954811f95b4ef950abd27d121ce12abb402b81133a6a505849",
+          "linkedWithoutMetadata": "2cde5712280e5d954811f95b4ef950abd27d121ce12abb402b81133a6a505849"
+        },
+        "inherit": [],
+        "libraries": [
+          "@openzeppelin/contracts/utils/Create2.sol:Create2"
+        ],
+        "methods": [
+          "createAccount(address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "contracts/Paymaster.sol:Paymaster": {
+        "src": "contracts/Paymaster.sol:6",
+        "version": {
+          "withMetadata": "cb9f760acc83c170aa8ca7d51e93cd658ce276b80cfe5e196bb3b627578fb08f",
+          "withoutMetadata": "1c7b20d1511596ce986ab558e4551628b7b39b00210c4039e9be741ab00c4fc6",
+          "linkedWithoutMetadata": "1c7b20d1511596ce986ab558e4551628b7b39b00210c4039e9be741ab00c4fc6"
+        },
+        "inherit": [
+          "@account-abstraction/contracts/interfaces/IPaymaster.sol:IPaymaster"
+        ],
+        "libraries": [],
+        "methods": [
+          "validatePaymasterUserOp((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes),bytes32,uint256)",
+          "postOp(uint8,bytes,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "contracts/Test.sol:Test": {
+        "src": "contracts/Test.sol:13",
+        "version": {
+          "withMetadata": "df1b0d0916b9beabe9e5f98b31a7cd1f527079571790e9f808488d3f6055a374",
+          "withoutMetadata": "55f0079f5ccc677a462db5167ad4900e851ed94b9389aa7836e528476300b4f0",
+          "linkedWithoutMetadata": "55f0079f5ccc677a462db5167ad4900e851ed94b9389aa7836e528476300b4f0"
+        },
+        "inherit": [],
+        "libraries": [
+          "@openzeppelin/contracts/utils/cryptography/ECDSA.sol:ECDSA",
+          "hardhat/console.sol:console"
+        ],
+        "methods": [
+          "(bytes)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "Test",
+            "src": "contracts/Test.sol:14"
+          }
+        ],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "contracts/Test.sol:TestTarget": {
+        "src": "contracts/Test.sol:22",
+        "version": {
+          "withMetadata": "10ab10b8e98baa8d0ffbdfcb93a311c165682c40d0ef9f8aa86781262a08239d",
+          "withoutMetadata": "400e43d77245da80b71069095f53b2428a316f4556b3d0f1b300b3c0644b23ed",
+          "linkedWithoutMetadata": "400e43d77245da80b71069095f53b2428a316f4556b3d0f1b300b3c0644b23ed"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "setX(uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "x",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_uint256",
+              "contract": "TestTarget",
+              "src": "contracts/Test.sol:23"
+            }
+          ],
+          "types": {
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "contracts/create1.sol:Account": {
+        "src": "contracts/create1.sol:9",
+        "version": {
+          "withMetadata": "6ad71a807bb398238d56167f6b2fb93b7246d7cbeb9bf85622a5425b4b8d4ffa",
+          "withoutMetadata": "820123ac2b50990ca801d611c069c015f9ce6c41fd5179bc11123a055e118079",
+          "linkedWithoutMetadata": "820123ac2b50990ca801d611c069c015f9ce6c41fd5179bc11123a055e118079"
+        },
+        "inherit": [
+          "@account-abstraction/contracts/interfaces/IAccount.sol:IAccount"
+        ],
+        "libraries": [
+          "@openzeppelin/contracts/utils/cryptography/ECDSA.sol:ECDSA"
+        ],
+        "methods": [
+          "(address)",
+          "validateUserOp((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes),bytes32,uint256)",
+          "execute()"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "Account",
+            "src": "contracts/create1.sol:13"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "count",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_uint256",
+              "contract": "Account",
+              "src": "contracts/create1.sol:10"
+            },
+            {
+              "label": "owner",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_address",
+              "contract": "Account",
+              "src": "contracts/create1.sol:11"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "contracts/create1.sol:AccountFactory": {
+        "src": "contracts/create1.sol:35",
+        "version": {
+          "withMetadata": "26cd8bb6b1ee3fb27455526544c2f1ff547cad34ca531e9f27391275de4e7e32",
+          "withoutMetadata": "27739d72ef0caa8f73e0b93e3fcd2d62f21acda0b572e9221b8c85d561f541f6",
+          "linkedWithoutMetadata": "27739d72ef0caa8f73e0b93e3fcd2d62f21acda0b572e9221b8c85d561f541f6"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "createAccount(address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      },
+      "hardhat/console.sol:console": {
+        "src": "hardhat/console.sol:4",
+        "version": {
+          "withMetadata": "f74f361b9e4ef9788ce7d8294ca2f6ca5356b2c9ce1ea09361354c6ac7f86529",
+          "withoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db",
+          "linkedWithoutMetadata": "a64c6cf9c6ba9368f5132c93a0196b3204a7963dbb4dd05dfddb4ab23126b8db"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.20"
+      }
+    }
+  ]
+}

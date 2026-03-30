@@ -1,18 +1,28 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
+require("@openzeppelin/hardhat-upgrades");
 
-
-
+/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  defaultNetwork: "localhost",
+  defaultNetwork: "hardhat",
+
   networks: {
-    arb: {
-      url: process.env.RPC_URL, 
-      accounts: [process.env.PRIVATE_KEY], 
+    localhost: {
+      url: "http://127.0.0.1:8545",
+    },
+
+    hardhat: {},
+
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "",
+      accounts: process.env.DEPLOYER_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY]
+        : [],
     },
   },
+
   solidity: {
-    version: "0.8.19",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true,
@@ -20,5 +30,8 @@ module.exports = {
       },
     },
   },
-};
 
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+};
