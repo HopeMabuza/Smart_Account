@@ -39,6 +39,7 @@ async function main(){
         console.log("Sender: ", sender);
     }
 
+    //use to get the return value of the function
     const sameSender = await accountFactory.createAccount.staticCall(user1Address);
     console.log("Same sender: ", sameSender);
 
