@@ -1,0 +1,140 @@
+Journal — Building a UserOperation
+The Goal
+In ERC-4337 account abstraction, a user doesn't submit transactions directly. Instead they submit a UserOperation (userOp) — a struct describing the intended action — to a bundler, which forwards it to the EntryPoint contract. The EntryPoint is the single trusted contract that validates and executes all userOps. My job in UserOperations.js was to correctly assemble every field of that struct.
+
+Step 1 — Deploying the Infrastructure
+const accountFactory = await AccountFactory.deploy();
+const entryPoint = await EntryPoint.deploy();
+
+Copy
+
+Insert at cursor
+Both contracts need to be live before anything else. The AccountFactory is responsible for deploying smart accounts deterministically using Create2. The EntryPoint is needed for two things later: fetching the nonce and hashing the userOp.
+
+Step 2 — Getting the Sender (the smart account address)
+const sender = await accountFactory.createAccount.staticCall(user1Address);
+
+Copy
+
+Insert at cursor
+js
+The sender field is the address of the user's smart contract account — not their EOA. The account may not even be deployed yet, but because AccountFactory uses Create2 with a salt derived from the owner address, the address is deterministic and computable before deployment.
+
+staticCall is the key here. Calling createAccount normally returns a transaction object, not the address. staticCall simulates the call and returns the function's actual return value — the address — without sending a transaction or spending gas. This was confirmed in Create2.js, which showed both approaches: the original EntryPoint.getSenderAddress() try/catch method, and then the cleaner staticCall approach that replaced it.
+
+Step 3 — Building the initCode
+const transaction = await accountFactory.createAccount(user1Address);
+const calldata_ = transaction.data;
+const initCode = accountFactoryAddress + calldata_.slice(2);
+
+Copy
+
+Insert at cursor
+js
+initCode tells the EntryPoint how to deploy the smart account if it doesn't exist yet. It is structured as:
+
+initCode = factoryAddress (20 bytes) + createAccount calldata (no 0x prefix)
+
+Copy
+
+Insert at cursor
+transaction.data is the raw ABI-encoded calldata of the createAccount(user1Address) call. The 0x prefix is stripped with .slice(2) before concatenation — leaving it in would produce an invalid hex string. The EntryPoint splits this field: it takes the first 20 bytes as the factory address and calls the rest as calldata on it.
+
+This was the core concept explored in Create2.js — that script was entirely dedicated to proving that initCode produces the correct sender address.
+
+Step 4 — Getting the callData
+execute() — single action
+// CallData.js
+const callData = Account.interface.encodeFunctionData("execute", []);
+
+Copy
+
+Insert at cursor
+encodeFunctionData produces the 4-byte function selector for execute(). Since execute() takes no arguments, the encoded result is just the selector alone. CallData.js isolated this to confirm the encoding before it was used inside the full userOp.
+
+executeBatch() — multiple actions in one userOp
+UserOperations2.js shows the real-world pattern — batching multiple contract calls into a single userOp. Instead of submitting three separate userOps, the user encodes all three actions into one callData field:
+
+// UserOperations2.js
+const action1 = { target: sender, value: 0, data: Account.interface.encodeFunctionData("greetings", ["Khensani"]) }
+const action2 = { target: sender, value: 0, data: Account.interface.encodeFunctionData("multiply", [2, 5]) }
+const action3 = { target: sender, value: 0, data: Account.interface.encodeFunctionData("check", []) }
+
+const callData = Account.interface.encodeFunctionData("executeBatch", [
+    [action1.target, action2.target, action3.target],  // dest[]
+    [action1.value, action2.value, action3.value],     // value[]
+    [action1.data,  action2.data,  action3.data]       // func[]
+]);
+
+Copy
+
+Insert at cursor
+js
+executeBatch in Account.sol takes three parallel arrays — dest[], value[], func[] — and loops through them, calling each target with its corresponding value and calldata. The arrays must be the same length or the contract reverts with "Mismatched inputs".
+
+Each action.data is itself an encodeFunctionData call — so func[] is an array of ABI-encoded function calls. This is the "pointer, value, function selector" structure from the rough draft: dest[] is the pointer (where to call), value[] is the ETH to send, and func[] is the encoded function selector + arguments.
+
+
+
+Copy
+
+Insert at cursor
+js
+callData is what the smart account will actually do once the EntryPoint validates and executes the userOp. encodeFunctionData produces the 4-byte function selector for execute(). Since execute() in Account.sol takes no arguments, the array is empty.
+
+CallData.js was dedicated to this single line — isolating and confirming how to encode a function call into the calldata format the account contract expects. For executeBatch, the same method would encode three parallel arrays: dest[] (target addresses), value[] (ETH per call), and func[] (encoded calldata for each target call).
+
+Step 5 — Assembling the userOp struct
+let userOp = {
+    sender: sender,
+    nonce: await entryPoint.getNonce(sender, 0),
+    initCode: initCode,
+    callData: callData,
+    callGasLimit: 10000,
+    verificationGasLimit: 10000,
+    preVerificationGas: 10000,
+    maxFeePerGas: 10000,
+    maxPriorityFeePerGas: 10000,
+    paymasterAndData: "0x",
+    signature: "0x"
+}
+
+Copy
+
+Insert at cursor
+js
+A few fields worth noting:
+
+nonce comes from entryPoint.getNonce(sender, 0) — the EntryPoint tracks nonces per sender to prevent the same userOp from being replayed
+
+paymasterAndData: "0x" means no paymaster — the account pays its own gas
+
+signature: "0x" is a deliberate placeholder — the struct must be fully assembled before it can be hashed and signed
+
+Step 6 — Signing the userOpHash
+const hashedUserOp = await entryPoint.getUserOpHash(userOp);
+userOp.signature = await user1.signMessage(ethers.getBytes(hashedUserOp));
+
+Copy
+
+Insert at cursor
+js
+Why sign the hash and not the userOp struct directly?
+
+The userOp contains dynamic-length fields (bytes, arrays). Signing the raw struct is ambiguous — there's no canonical byte representation. getUserOpHash in the EntryPoint produces a deterministic 32-byte hash of the packed userOp fields, plus the chainId and entryPoint address. This binds the signature to a specific chain and a specific EntryPoint version, preventing cross-chain and cross-contract replay attacks.
+
+signMessage applies the EIP-191 prefix (\x19Ethereum Signed Message:\n32) before signing. On-chain, Account.sol's validateUserOp mirrors this exactly:
+
+address recovered = ECDSA.recover(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature);
+return owner == recovered ? 0 : 1;
+
+Copy
+
+Insert at cursor
+solidity
+signature.js was the proof-of-concept for this entire flow — it confirmed that signing a hash off-chain with signMessage and recovering it on-chain with ECDSA.toEthSignedMessageHash + ECDSA.recover produces the original signer's address.
+
+The signature is set on the userOp after hashing because the hash is computed over the struct with the empty "0x" placeholder. If the real signature were already in the struct when hashing, the hash would change — making the signature invalid.
+
+
+
