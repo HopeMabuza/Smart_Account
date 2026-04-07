@@ -41,6 +41,20 @@ contract Account is IAccount {
     function execute() external {
         count++;
     }
+
+    function greetings(string calldata name) external pure returns (string memory) {
+    return string.concat("Hello ", name, "!!!!");
+    }
+
+    function multiply(uint256 x, uint256 y) external pure returns (uint256){
+        return x * y;
+    }
+
+    function check() external pure returns(string memory){
+        return "How are you?";
+    }
+
+
 }
 
 

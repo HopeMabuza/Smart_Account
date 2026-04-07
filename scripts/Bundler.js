@@ -1,146 +1,71 @@
-const {ethers} = require("hardhat");
-const EP_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
+require("dotenv").config();
+const { ethers } = require("hardhat");
 
 async function main() {
-    const [deployer, signer1] = await ethers.getSigners();
-    const deployer_address = await deployer.getAddress();
+    const [user1] = await ethers.getSigners();
+    const user1Address = await user1.getAddress();
 
-    console.log("Deployer's address: ", deployer_address);
+    const entryPointAddress = process.env.ENTRYPOINT_ADDRESS.trim();
+    const rpcUrl = process.env.ALCHEMY_RPC_URL.trim();
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    const AccountFactoryFactory = await ethers.getContractFactory("contracts/Account.sol:AccountFactory");
-    const accountFactory = await AccountFactoryFactory.deploy(AccountFactoryFactory);
+    const entryPointContract = await ethers.getContractAt("EntryPoint", entryPointAddress);
+
+    // Deploy AccountFactory
+    const AccountFactory = await ethers.getContractFactory("contracts/Account.sol:AccountFactory");
+    const accountFactory = await AccountFactory.deploy();
     await accountFactory.waitForDeployment();
-
     const accountFactoryAddress = await accountFactory.getAddress();
-    console.log("Account Factory deployed to: ", accountFactoryAddress);
 
-    // Now we are using an EP from alchemy.
-    const entrypoint = await ethers.getContractAt("EntryPoint", EP_ADDRESS);
-    console.log("Using EntryPoint at address: ", await entrypoint.getAddress());
+    const Account = await ethers.getContractFactory("contracts/Account.sol:Account");
 
+    // Get sender via staticCall (no deployment)
+    const sender = await accountFactory.createAccount.staticCall(user1Address);
+    console.log("Sender address: ", sender);
 
+    // Build initCode
+    const createAccountCalldata = accountFactory.interface.encodeFunctionData("createAccount", [user1Address]);
+    const initCode = accountFactoryAddress + createAccountCalldata.slice(2);
 
-    // Get fields to build UserOp object
-    console.log("Creating an account using public address: ", deployer_address);
+    // Fund sender before deploying (CREATE2 address is deterministic)
+    console.log("Depositing 0.05 Ether into the SCA at address: ", sender);
+    await user1.sendTransaction({ to: sender, value: ethers.parseEther("0.05") });
+    console.log("Deposit was successful!");
 
-
-    // sender 
-    // const senderAddress = await accountFactory.createAccount.staticCall(deployer_address);
-    const senderAddress = "0x855439299fa6329777DAA683204d683a03afeE5d";
-    console.log("Created SCA at address: ", senderAddress);
-
-    // // Deposit funds to SCA - so that it can pay ITSELF! | DEPOSIT ONCE
-    // console.log("Depositing 0.05 Ether into the SCA at address: ", senderAddress);
-    // await entrypoint.depositTo(senderAddress, {
-    //     value: ethers.parseEther(".05"),
-    // });
-
-    // console.log("Deposit was successful!");
-
-
-
-
-    // Init code
-    const tx = await accountFactory.createAccount(deployer_address);
+    // Deploy the account
+    const tx = await accountFactory.createAccount(user1Address);
     await tx.wait();
-    const InitCode = accountFactoryAddress + tx.data.slice(2);
 
-    console.log("InitCode: ", InitCode);
+    const callData = Account.interface.encodeFunctionData("execute", []);
 
-    //Calldata
-    console.log("Getting the callData now...");
-    const Account_Factory = await ethers.getContractFactory("contracts/Account.sol:Account");
-
-    const call1 = {
-        target: senderAddress,
-        value: 0,
-        data: Account_Factory.interface.encodeFunctionData("addNums", [2,5])
-    }
-
-    const call2 = {
-        target: senderAddress,
-        value: 0,
-        data: Account_Factory.interface.encodeFunctionData("MultNum", [2,5])       
-    }
-
-    const call3 = {
-        target: senderAddress,
-        value: 0,
-        data: Account_Factory.interface.encodeFunctionData("execute", [5])
-    }
-
-        // encode these calls into executeBatch
-    const batchCallData = Account_Factory.interface.encodeFunctionData("executeBatch", [
-        [call1.target, call2.target, call3.target],
-        [call1.value, call2.value, call3.value],
-        [call1.data, call2.data, call3.data] 
-    ]);
-
-    // console.log("The batch call data encoded hex: ", batchCallData);
-
-    console.log("STARTING TO CONSTRUCT THE USEROP...");
+    const nonce = await entryPointContract.getNonce(sender, 0);
 
     let userOp = {
-        sender: senderAddress,
-
-        // For interacting with the API, the needs to be in a Hex or i will get errors. It returns a BigInt normally
-        nonce: "0x" + (await entrypoint.getNonce(senderAddress, 0)).toString(16),
-        initCode: "0x",
-        callData: batchCallData,
+        sender: sender,
+        nonce: "0x" + nonce.toString(16),
+        initCode: "0x",  // already deployed above
+        callData: callData,
+        callGasLimit: "0x0",
+        verificationGasLimit: "0x0",
+        preVerificationGas: "0x0",
+        maxFeePerGas: "0x0",
+        maxPriorityFeePerGas: "0x0",
         paymasterAndData: "0x",
-
-        // Pass in dummy signature from alchemy docs so the UserOp doesnt give errors.
-        signature: "0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c",
+        signature: "0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c"
     };
 
-    // Getting the gas Numbers for the sections
-        // These 3 limits come from on the same method "eth_estimateUserOperationGas"
-            // callGasLimit: 200000,    // from Bundler estimation
-            // verificationGasLimit: 150000,
-            // preVerificationGas: 50000,
-        // For this, it is a similar approach 
-    // maxFeePerGas: 20000000000, - this is obtained from ethers
-    // maxPriorityFeePerGas: 20000000000, - this is obtained from ethers!
-
     console.log("Getting gas estimations...");
+    const response = await provider.send("eth_estimateUserOperationGas", [userOp, entryPointAddress.trim()]);
+    console.log("Response: ", response);
 
-    // This below will get the gas Estimates for you. It takes the EntryPoint address and the UserOp as args
-    const response = await ethers.provider.send("eth_estimateUserOperationGas", [userOp, EP_ADDRESS]);
-
-    //FIll in userop gas fields
     userOp.preVerificationGas = response.preVerificationGas;
     userOp.verificationGasLimit = response.verificationGasLimit;
     userOp.callGasLimit = response.callGasLimit;
 
-    // Get the MAX fees!
-    const maxResponse = await ethers.provider.getFeeData();
-    userOp.maxFeePerGas = maxResponse.maxFeePerGas;
+    const hashedUserOp = await entryPointContract.getUserOpHash(userOp);
+    console.log("UserOp Hash: ", hashedUserOp);
 
-    // const maxPriorityFeePerGas = await ethers.provider.send("rundler_maxPriorityFeePerGas");
-    // userOp.maxPriorityFeePerGas = maxPriorityFeePerGas;
-
-
-//     Signature
-    console.log("Getting Signature of the UserOpHash");
-
-//     Get userOpHash bytes as you cannot sign an object directly. Convert it to 32-bytes
-    const userOpHash = await entrypoint.getUserOpHash.staticCall(userOp);
-
-//     Sign the 32-byte hash then store it back into the field
-    const signature = await deployer.signMessage(ethers.toBeArray(userOpHash));
-    userOp.signature = signature;
-
-    console.log("Signature of UserOpHash: ", signature);
-    console.log(userOp);
-
-    // Get the gas estimates here then update UserOp.
-
-
-
-
-    // Paymaster
-
-
-
-    
-} main().catch(console.error)
+    userOp.signature = await user1.signMessage(ethers.getBytes(hashedUserOp));
+    console.log("UserOperation: ", userOp);
+}
+main().catch(console.error);
